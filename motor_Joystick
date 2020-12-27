@@ -1,0 +1,181 @@
+
+//Pin Motor A
+
+int enA = 9;
+int in1 = 8;
+int in2 = 7;
+
+//Pin Motor B
+
+int enB = 3;
+int in3 = 5;
+int in4 = 4;
+
+// Joystick Input
+
+int joyVert = A0; // Vertical  
+int joyHorz = A1; // Horizontal
+
+// Anfangsgeschw.
+
+int MotorSpeed1 = 0;
+int MotorSpeed2 = 0;
+
+// Joystick Werte - Start at 512 (Mittellage)
+
+int joyposVert = 512;
+int joyposHorz = 512;  
+
+
+void setup()
+
+{
+
+  // Set all the motor control pins to outputs
+
+  pinMode(enA, 1);
+  pinMode(enB, 1);
+  pinMode(in1, 1);
+  pinMode(in2, 1);
+  pinMode(in3, 1);
+  pinMode(in4, 1);
+   
+  // Anfang mit Motor aus
+  
+  // Motor A
+  
+  digitalWrite(enA, 0);
+  digitalWrite(in1, 1);
+  digitalWrite(in2, 0);
+  
+  // Motor B
+  
+  digitalWrite(enB, 0);
+  digitalWrite(in3, 1);
+  digitalWrite(in4, 0);
+  
+}
+
+void loop() {
+
+	// Joystick X and Y Position einlesen
+
+	joyposVert = analogRead(joyVert); 
+	joyposHorz = analogRead(joyHorz);
+
+	// Determine if this is a forward or backward motion
+	// Do this by reading the Verticle Value
+	// Apply results to MotorSpeed and to Direction
+
+	if (joyposVert < 460)
+	{
+		// ruckwärts
+
+		// Setzt Motor A ruckwärts
+
+		digitalWrite(in1, 0);
+		digitalWrite(in2, 1);
+
+		// Setzt Motor B ruckwärts
+
+		digitalWrite(in3, 0);
+		digitalWrite(in4, 1);
+
+		//Determine Motor Speeds
+
+		// As we are going backwards we need to reverse readings
+
+		joyposVert = joyposVert - 460; // This produces a negative number
+		joyposVert = joyposVert * -1;  // Make the number positive
+
+		MotorSpeed1 = map(joyposVert, 0, 460, 0, 255);
+		MotorSpeed2 = map(joyposVert, 0, 460, 0, 255);
+
+	}
+	else if (joyposVert > 564)
+	{
+		// This is Forward
+
+		// Set Motor A forward
+
+		digitalWrite(in1, HIGH);
+		digitalWrite(in2, LOW);
+
+		// Set Motor B forward
+
+		digitalWrite(in3, HIGH);
+		digitalWrite(in4, LOW);
+
+		//Determine Motor Speeds
+
+		MotorSpeed1 = map(joyposVert, 564, 1023, 0, 255);
+		MotorSpeed2 = map(joyposVert, 564, 1023, 0, 255); 
+
+	}
+	else
+	{
+		// This is Stopped
+
+		MotorSpeed1 = 0;
+		MotorSpeed2 = 0; 
+
+	}
+	
+	// Now do the steering
+	// The Horizontal position will "weigh" the motor speed
+	// Values for each motor
+
+	if (joyposHorz < 460)
+	{
+		// Move Left
+
+		// As we are going left we need to reverse readings
+
+		joyposHorz = joyposHorz - 460; // This produces a negative number
+		joyposHorz = joyposHorz * -1;  // Make the number positive
+
+		// Map the number to a value of 255 maximum
+
+		joyposHorz = map(joyposHorz, 0, 460, 0, 255);
+			  
+
+		MotorSpeed1 = MotorSpeed1 - joyposHorz;
+		MotorSpeed2 = MotorSpeed2 + joyposHorz;
+
+		// Don't exceed range of 0-255 for motor speeds
+
+		if (MotorSpeed1 < 0)MotorSpeed1 = 0;
+		if (MotorSpeed2 > 255)MotorSpeed2 = 255;
+
+	}
+	else if (joyposHorz > 564)
+	{
+		// Move Right
+
+		// Map the number to a value of 255 maximum
+
+		joyposHorz = map(joyposHorz, 564, 1023, 0, 255);
+			  
+
+		MotorSpeed1 = MotorSpeed1 + joyposHorz;
+		MotorSpeed2 = MotorSpeed2 - joyposHorz;
+
+		// Don't exceed range of 0-255 for motor speeds
+
+		if (MotorSpeed1 > 255)MotorSpeed1 = 255;
+		if (MotorSpeed2 < 0)MotorSpeed2 = 0;		  
+
+	}
+
+
+	// Adjust to prevent "buzzing" at very low speed
+
+	if (MotorSpeed1 < 8)MotorSpeed1 = 0;
+	if (MotorSpeed2 < 8)MotorSpeed2 = 0;
+
+	// Set the motor speeds
+
+	analogWrite(enA, MotorSpeed1);
+	analogWrite(enB, MotorSpeed2);
+
+}
